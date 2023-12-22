@@ -1,5 +1,5 @@
 const express = require('express')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 require('dotenv').config();
 const port = process.env.PORT || 5000;
@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const listCollection = client.db("task_management").collection("taskList");
 
 
@@ -34,6 +34,25 @@ async function run() {
         console.log('new task',task);
         const result = await listCollection.insertOne(task);
         res.send(result)
+      })
+
+      app.get('/task', async (req, res) => {
+        console.log(req.query);
+        let query = {};
+        if (req.query?.email) {
+          query = { email: req.query.email }
+        }
+        const cursor = listCollection.find(query);
+        const result = await cursor.toArray();
+        res.send(result);
+      });
+
+      app.delete('/task/:id', async (req, res) => {
+        const id = req.params.id
+        console.log('delete id', id)
+        const query = { _id: new ObjectId(id) };
+        const result = await listCollection.deleteOne(query);
+        res.send(result);
       })
 
     // Send a ping to confirm a successful connection
